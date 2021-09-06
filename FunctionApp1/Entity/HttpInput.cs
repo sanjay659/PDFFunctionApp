@@ -8,5 +8,7 @@ namespace FunctionApp1.Entity
     {
         public string Pdf { get; set; }
         public string Password { get; set; }
+
+        public string FileName { get; set; }
     }
 }

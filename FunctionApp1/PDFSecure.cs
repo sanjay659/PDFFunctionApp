@@ -21,7 +21,7 @@ namespace FunctionApp1
     public static class PDFSecure
     {
         [FunctionName("PdfSecure")]
-        public static async Task<HttpResponseMessage> Run(
+        public static async Task<string> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -44,8 +44,8 @@ namespace FunctionApp1
 
                 // Setting one of the passwords automatically sets the security level to 
                 // PdfDocumentSecurityLevel.Encrypted128Bit.
-                securitySettings.UserPassword = "user";
-                securitySettings.OwnerPassword = "owner";
+                securitySettings.UserPassword = inputEntity.Password;
+                securitySettings.OwnerPassword = inputEntity.Password;
 
                 // Don´t use 40 bit encryption unless needed for compatibility reasons
                 //securitySettings.DocumentSecurityLevel = PdfDocumentSecurityLevel.Encrypted40Bit;
@@ -62,14 +62,24 @@ namespace FunctionApp1
                 MemoryStream ms = new MemoryStream();
                 document.Save(ms);
                 ms.Position = 0;
+                //HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
+                //response.Content = new ByteArrayContent(ms.ToArray());
+                //response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                //{
+                //    FileName = "PDFDocument.pdf"
+                //};
+                //response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                //return response;
+
                 HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new ByteArrayContent(ms.ToArray());
-                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-                {
-                    FileName = "PDFDocument.pdf"
-                };
-                response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                return response;
+                
+                var bytes = new Byte[(int)ms.Length];
+
+                ms.Seek(0, SeekOrigin.Begin);
+                ms.Read(bytes, 0, (int)ms.Length);
+
+                return Convert.ToBase64String(bytes); 
+
             }
             catch (Exception ex)
             {
