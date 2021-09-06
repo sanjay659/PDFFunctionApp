@@ -21,7 +21,7 @@ namespace FunctionApp1
     public static class PDFSecure
     {
         [FunctionName("PdfSecure")]
-        public static async Task<string> Run(
+        public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -32,23 +32,21 @@ namespace FunctionApp1
                 HttpInput inputEntity = JsonConvert.DeserializeObject<HttpInput>(requestBody);
 
                 var imageBytes = Convert.FromBase64String(inputEntity.Pdf);
-                MemoryStream mem = new MemoryStream(imageBytes);
-                //MemoryStream mem = new MemoryStream(File.ReadAllBytes(@"C:\Users\Sanjay.Thakur\Downloads\StudentReport.pdf"));
-                //pdf.Pdf.PdfDocument document = pdf.Pdf.IO.PdfReader.Open(, pdfIO.PdfDocumentOpenMode.Modify);
+                MemoryStream mem = new MemoryStream(imageBytes);                
+                
 
                 pdf.Pdf.PdfDocument document = pdf.Pdf.IO.PdfReader.Open(mem, pdfIO.PdfDocumentOpenMode.Modify);
+                
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 var enc1252 = Encoding.GetEncoding(1252);
 
                 PdfSecuritySettings securitySettings = document.SecuritySettings;
 
-                // Setting one of the passwords automatically sets the security level to 
-                // PdfDocumentSecurityLevel.Encrypted128Bit.
+                
                 securitySettings.UserPassword = inputEntity.Password;
                 securitySettings.OwnerPassword = inputEntity.Password;
 
-                // Don´t use 40 bit encryption unless needed for compatibility reasons
-                //securitySettings.DocumentSecurityLevel = PdfDocumentSecurityLevel.Encrypted40Bit;
+                
 
                 // Restrict some rights.
                 securitySettings.PermitAccessibilityExtractContent = false;
@@ -59,26 +57,20 @@ namespace FunctionApp1
                 securitySettings.PermitFullQualityPrint = false;
                 securitySettings.PermitModifyDocument = true;
                 securitySettings.PermitPrint = false;
+                
                 MemoryStream ms = new MemoryStream();
                 document.Save(ms);
                 ms.Position = 0;
-                //HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
-                //response.Content = new ByteArrayContent(ms.ToArray());
-                //response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-                //{
-                //    FileName = "PDFDocument.pdf"
-                //};
-                //response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                //return response;
-
                 HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
-                
-                var bytes = new Byte[(int)ms.Length];
+                response.Content = new ByteArrayContent(ms.ToArray());
+                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                {
+                    FileName = "PDFDocument.pdf"
+                };
+                response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                return response;
 
-                ms.Seek(0, SeekOrigin.Begin);
-                ms.Read(bytes, 0, (int)ms.Length);
 
-                return Convert.ToBase64String(bytes); 
 
             }
             catch (Exception ex)
