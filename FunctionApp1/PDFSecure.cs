@@ -65,7 +65,7 @@ namespace FunctionApp1
                 response.Content = new ByteArrayContent(ms.ToArray());
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
                 {
-                    FileName = "PDFDocument.pdf"
+                    FileName = inputEntity.FileName
                 };
                 response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
                 return response;
